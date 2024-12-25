@@ -1,0 +1,22 @@
+[project]
+name = "lolzteam"
+dynamic = ["version", "readme"]
+dependencies = [
+    "niquests",
+]
+requires-python = ">= 3.8"
+authors = [
+    {name = "oyunsky", email = "deadcardinal293@gmail.com"}
+]
+description = "Lolzteam Python API wrapper"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "lolzteam.__version__"}
+readme = {file = ["README.md"]}
+
+[tool.setuptools.packages.find]
+where = ["src"]
