@@ -1,6 +1,12 @@
-## Usage
+## Установка
 
-```py
+```sh
+python -m pip install git+https://github.com/cardisnotvalid/lolzteam-api.git
+```
+
+## Использование
+
+```python
 import os
 from lolzteam import Lolzteam
 
