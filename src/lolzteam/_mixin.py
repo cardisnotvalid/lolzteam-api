@@ -1,23 +1,24 @@
 from __future__ import annotations
 
-from typing import Protocol, List, Mapping, Any
+from typing import TYPE_CHECKING, Any, List, Dict, Protocol
 
-from niquests._typing import BodyType, AsyncBodyType
+if TYPE_CHECKING:
+    from niquests._typing import BodyType, AsyncBodyType
 
-from ._types import (
-    JsonType,
-    ReplyGroupType,
-    ArbitrageTransferType,
-    GeneralOrderType,
-    PostOrderType,
-    UserOrderType,
-    ConversationOrderType,
-    ConversationDeleteType,
-    ContestType,
-    ContestPrizeType,
-    ContestLengthOptionType,
-    ContestPrizeDataUpgradeType,
-) 
+    from ._types import (
+        JsonType,
+        ContestType,
+        PostOrderType,
+        UserOrderType,
+        ReplyGroupType,
+        GeneralOrderType,
+        ContestPrizeType,
+        ArbitrageTransferType,
+        ConversationOrderType,
+        ConversationDeleteType,
+        ContestLengthOptionType,
+        ContestPrizeDataUpgradeType,
+    ) 
 
 
 def _one_or_none(value: bool | None) -> str | None:
@@ -28,28 +29,30 @@ def _true_or_none(value: bool | None) -> str | None:
     return "true" if value else None
 
 
+# TODO: Исправить подсказку типов методов (pyright + ruff)
+#       Например, Dict[str, Any] -> QueryParamType
 class SyncClientProtocol(Protocol):
     def get(
         self,
         url: str,
         *,
-        params: Mapping[str, Any] | None = None
+        params: Dict[str, Any] | None = None,
     ) -> JsonType: ...
 
     def post(
         self,
         url: str,
         *,
-        files: Mapping[str, Any] | None = None,
+        files: Dict[str, Any] | None = None,
         data: BodyType | AsyncBodyType | None = None,
-        params: Mapping[str, Any] | None = None,
+        params: Dict[str, Any] | None = None,
     ) -> JsonType: ...
 
     def delete(
         self,
         url: str,
         *,
-        params: Mapping[str, Any] | None = None
+        params: Dict[str, Any] | None = None,
     ) -> JsonType: ...
 
     def put(
@@ -57,7 +60,7 @@ class SyncClientProtocol(Protocol):
         url: str,
         *,
         data: BodyType | AsyncBodyType | None = None,
-        params: Mapping[str, Any] | None = None,
+        params: Dict[str, Any] | None = None,
     ) -> JsonType: ...
 
 
@@ -67,7 +70,7 @@ class SyncCategoriesMixin(SyncClientProtocol):
         *,
         parent_category_id: int | None = None,
         parent_forum_id: int | None = None,
-        order: GeneralOrderType | None = None
+        order: GeneralOrderType | None = None,
     ) -> JsonType:
         """
         List of all categories in the system.
@@ -338,7 +341,7 @@ class SyncThreadsMixin(SyncClientProtocol):
         thread_tag_id: int | None = None,
         page: int | None = None,
         limit: int | None = None,
-        order: GeneralOrderType | None = None
+        order: GeneralOrderType | None = None,
     ) -> JsonType:
         """
         List of threads in a forum (with pagination).
@@ -842,7 +845,7 @@ class SyncThreadsMixin(SyncClientProtocol):
         self,
         thread_id: int,
         *,
-        reason: str | None = None
+        reason: str | None = None,
     ) -> JsonType:
         """
         Delete a thread.

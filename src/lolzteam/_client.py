@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import os
-from typing import Dict
+from typing import Mapping
 
-from ._version import __version__
+from . import __version__
 from ._base_client import SyncAPIClient
 from ._mixin import SyncAllMixin
 
@@ -20,10 +20,11 @@ class Lolzteam(SyncAPIClient, SyncAllMixin):
         if not api_key:
             api_key = os.environ.get("LOLZTEAM_API_KEY")
         if not api_key:
-            raise TypeError("The `api_key` client option must be set either "
-                            "by passing `api_key` to the client or by "
-                            "setting the `LOLZTEAM_API_KEY` environment "
-                            "variable")
+            raise TypeError(
+                "The `api_key` client option must be set either by passing "
+                "`api_key` to the client or by setting the "
+                "`LOLZTEAM_API_KEY` environment variable"
+            )
         self._api_key = api_key
 
         if not base_url:
@@ -32,5 +33,5 @@ class Lolzteam(SyncAPIClient, SyncAllMixin):
         super().__init__(version=__version__, base_url=base_url)
 
     @property
-    def auth_headers(self) -> Dict[str, str]:
+    def auth_headers(self) -> Mapping[str, str]:
         return {"Authorization": f"Bearer {self._api_key}"}
