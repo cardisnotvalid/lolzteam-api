@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from niquests import PreparedRequest, Response
+from typing import Literal
 
 
 class LolzteamException(Exception):
@@ -11,38 +8,28 @@ class LolzteamException(Exception):
 
 
 class APIError(LolzteamException):
-    message: str
-    request: PreparedRequest | None
-    body: object | None
-
-    def __init__(
-        self,
-        message: str,
-        request: PreparedRequest | None,
-        *,
-        body: object | None = None,
-    ) -> None:
+    def __init__(self, message: str) -> None:
         super().__init__(message)
-        self.message = message
-        self.request = request
-        self.body = body
 
 
 class APIStatusError(APIError):
-    response: Response
-    status_code: int | None
+    status_code: int
+    message: str
 
-    def __init__(
-        self,
-        message: str,
-        *,
-        response: Response,
-        body: object | None = None
-    ) -> None:
-        super().__init__(message, response.request, body=body)
-        self.response = response
-        self.status_code = response.status_code
+    def __init__(self, message: str | None = None) -> None:
+        super().__init__(f"{message or self.message}")
+
+
+class BadRequestError(APIStatusError):
+    status_code: Literal[400] = 400
+    message = "Bad Request"
+
+
+class PermissionDeniedError(APIStatusError):
+    status_code: Literal[403] = 403
+    message = "Forbidden"
 
 
 class RateLimitError(APIStatusError):
-    status_code = 429
+    status_code: Literal[429] = 429
+    message = "Too Many Requests"

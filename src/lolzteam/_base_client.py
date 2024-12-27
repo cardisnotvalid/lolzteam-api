@@ -8,7 +8,12 @@ import time
 import niquests
 
 from . import _loggers
-from ._exceptions import APIStatusError, RateLimitError
+from ._exceptions import (
+    APIStatusError,
+    BadRequestError,
+    PermissionDeniedError,
+    RateLimitError,
+)
 
 if TYPE_CHECKING:
     from niquests._typing import (
@@ -111,15 +116,21 @@ class BaseClient(Generic[_NiquestsSessionT]):
         )
         return self._client.prepare_request(req)
 
-    # TODO: создать базоый класс для ошибок api
+    def _get_error_message(self, response: Response) -> str:
+        return "; ".join(response.json().get("errors", []))
+
     def _check_response(self, response: Response) -> None:
         if not response.ok:
-            if response.status_code == 429:
-                raise RateLimitError("Too many requests", response=response)
+            if response.status_code == 400:
+                raise BadRequestError(self._get_error_message(response))
 
-            data  = response.json().get("errors", [])
-            message = "; ".join(data)
-            raise APIStatusError(message, response=response, body=data)
+            if response.status_code == 403:
+                raise PermissionDeniedError(self._get_error_message(response))
+
+            if response.status_code == 429:
+                raise RateLimitError("Too Many Requests")
+
+            raise APIStatusError(self._get_error_message(response))
 
     def _update_last_request_time(self) -> None:
         self._last_request_time = time.time()
