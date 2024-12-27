@@ -7,17 +7,18 @@ if TYPE_CHECKING:
 
     from ._types import (
         JsonType,
-        ContestType,
-        PostOrderType,
+        UserType,
         UserOrderType,
-        ReplyGroupType,
-        GeneralOrderType,
-        ContestPrizeType,
-        ArbitrageTransferType,
+        PostOrderType,
         ConversationOrderType,
         ConversationDeleteType,
-        ContestLengthOptionType,
+        ReplyGroupType,
+        ArbitrageTransferType,
+        ContestType,
+        ContestPrizeType,
         ContestPrizeDataUpgradeType,
+        ContestLengthOptionType,
+        GeneralOrderType,
     ) 
 
 
@@ -1407,7 +1408,11 @@ class SyncPostsMixin(SyncClientProtocol):
 
 
 class SyncUsersMixin(SyncClientProtocol):
-    def upload_avatar(self, user_id: int | str, filepath: str) -> JsonType:
+    def upload_avatar(
+        self,
+        user_id: int | UserType,
+        filepath: str
+    ) -> JsonType:
         """
         Upload avatar for a user.
 
@@ -1430,7 +1435,7 @@ class SyncUsersMixin(SyncClientProtocol):
 
     def crop_avatar(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         crop: int,
         *,
         x: int | None = None,
@@ -1460,7 +1465,7 @@ class SyncUsersMixin(SyncClientProtocol):
         params = {"x": x, "y": y, "crop": crop}
         return self.post(f"/users/{user_id}/avatar/crop", params=params)
 
-    def delete_avatar(self, user_id: int | str) -> JsonType:
+    def delete_avatar(self, user_id: int | UserType) -> JsonType:
         """
         Delete avatar for a user.
 
@@ -1480,7 +1485,7 @@ class SyncUsersMixin(SyncClientProtocol):
 
     def upload_background(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         filepath: str,
         crop: int,
         *,
@@ -1516,7 +1521,7 @@ class SyncUsersMixin(SyncClientProtocol):
             f"/users/{user_id}/background", files=files, params=params
         )
 
-    def delete_background(self, user_id: int | str) -> JsonType:
+    def delete_background(self, user_id: int | UserType) -> JsonType:
         """
         Delete background for a user.
 
@@ -1536,7 +1541,7 @@ class SyncUsersMixin(SyncClientProtocol):
 
     def crop_background(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         crop: int,
         *,
         x: int | None = None,
@@ -1693,7 +1698,7 @@ class SyncUsersMixin(SyncClientProtocol):
         }
         return self.get("/users/find", params=params)
 
-    def get_user(self, user_id: int | str) -> JsonType:
+    def get_user(self, user_id: int | UserType) -> JsonType:
         """
         Detail information of a user.
 
@@ -1815,7 +1820,7 @@ class SyncUsersMixin(SyncClientProtocol):
 
     def get_user_followers(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         *,
         order: UserOrderType | None = None,
         page: int | None = None,
@@ -1847,7 +1852,7 @@ class SyncUsersMixin(SyncClientProtocol):
 
     def get_followed_users_by_user(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         *,
         order: UserOrderType | None = None,
         page: int | None = None,
@@ -1877,7 +1882,7 @@ class SyncUsersMixin(SyncClientProtocol):
         params = {"order": order, "page": page, "limit": limit}
         return self.get(f"/users/{user_id}/followings", params=params)
 
-    def follow_user(self, user_id: int | str) -> JsonType:
+    def follow_user(self, user_id: int | UserType) -> JsonType:
         """
         Follow a user.
 
@@ -1895,7 +1900,7 @@ class SyncUsersMixin(SyncClientProtocol):
         """
         return self.post(f"/users/{user_id}/followers")
 
-    def unfollow_user(self, user_id: int | str) -> JsonType:
+    def unfollow_user(self, user_id: int | UserType) -> JsonType:
         """
         Unfollow a user.
 
@@ -1931,7 +1936,7 @@ class SyncUsersMixin(SyncClientProtocol):
         params = {"total": _true_or_none(total)}
         return self.get("/users/ignored", params=params)
 
-    def ignore_user(self, user_id: int | str) -> JsonType:
+    def ignore_user(self, user_id: int | UserType) -> JsonType:
         """
         Ignore a user.
 
@@ -1949,7 +1954,7 @@ class SyncUsersMixin(SyncClientProtocol):
         """
         return self.post(f"/users/{user_id}/ignore")
 
-    def unignore_user(self, user_id: int | str) -> JsonType:
+    def unignore_user(self, user_id: int | UserType) -> JsonType:
         """
         Stop ignoring a user.
 
@@ -1969,7 +1974,7 @@ class SyncUsersMixin(SyncClientProtocol):
 
     def get_contests(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         *,
         page: int | None = None,
         limit: int | None = None,
@@ -2080,7 +2085,7 @@ class SyncProfilePostsMixin(SyncClientProtocol):
 
     def get_profile_posts(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         *,
         page: int | None = None,
         limit: int | None = None,
@@ -2125,7 +2130,7 @@ class SyncProfilePostsMixin(SyncClientProtocol):
 
     def create_profile_post(
         self,
-        user_id: int | str,
+        user_id: int | UserType,
         post_body: str,
     ) -> JsonType:
         """
