@@ -16,6 +16,9 @@ class Lolzteam(SyncAPIClient, SyncAllMixin):
         *,
         api_key: str | None = None,
         base_url: str | None = None,
+        keep_rate_limit: bool  = True,
+        request_limit: int = 20,
+        delay_between_requests: int = 3,
     ) -> None:
         if not api_key:
             api_key = os.environ.get("LOLZTEAM_API_KEY")
@@ -30,7 +33,13 @@ class Lolzteam(SyncAPIClient, SyncAllMixin):
         if not base_url:
             base_url = "https://api.zelenka.guru"
 
-        super().__init__(version=__version__, base_url=base_url)
+        super().__init__(
+            version=__version__,
+            base_url=base_url,
+            keep_rate_limit=keep_rate_limit,
+            request_limit=request_limit,
+            delay_between_requests=delay_between_requests,
+        )
 
     @property
     def auth_headers(self) -> Mapping[str, str]:

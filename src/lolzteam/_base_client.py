@@ -3,7 +3,12 @@ from __future__ import annotations
 from types import TracebackType
 from typing import TYPE_CHECKING, TypeVar, Dict, Union, Generic
 
+import time
+
 import niquests
+
+from . import _loggers
+from ._exceptions import APIStatusError, RateLimitError
 
 if TYPE_CHECKING:
     from niquests._typing import (
@@ -17,6 +22,7 @@ if TYPE_CHECKING:
 
     from ._types import JsonType
 
+log = _loggers.api
 
 _T = TypeVar("_T")
 
@@ -52,15 +58,39 @@ class Route:
 
 
 class BaseClient(Generic[_NiquestsSessionT]):
-    __slots__ = ("_version", "_base_url", "_client")
+    __slots__ = (
+        "_client",
+        "_version",
+        "_base_url",
+        "_keep_rate_limit",
+        "_request_limit",
+        "_delay_between_requests",
+        "_last_request_time",
+    )
 
+    _client: _NiquestsSessionT
     _version: str
     _base_url: str
-    _client: _NiquestsSessionT
+    _keep_rate_limit: bool
+    _request_limit: int
+    _delay_between_requests: int
+    _last_request_time: float
 
-    def __init__(self, *, version: str, base_url: str) -> None:
+    def __init__(
+        self,
+        *,
+        version: str,
+        base_url: str,
+        keep_rate_limit: bool,
+        request_limit: int,
+        delay_between_requests: int,
+    ) -> None:
         self._version = version
         self._base_url = base_url
+        self._keep_rate_limit = keep_rate_limit
+        self._last_request_time = 0
+        self._request_limit = request_limit
+        self._delay_between_requests = delay_between_requests
 
     def _build_request(self, route: Route) -> PreparedRequest:
         headers = self.default_headers
@@ -84,9 +114,22 @@ class BaseClient(Generic[_NiquestsSessionT]):
     # TODO: создать базоый класс для ошибок api
     def _check_response(self, response: Response) -> None:
         if not response.ok:
-            errors = response.json().get("errors", [])
-            msg = "; ".join(errors)
-            raise niquests.RequestException(msg)
+            if response.status_code == 429:
+                raise RateLimitError("Too many requests", response=response)
+
+            data  = response.json().get("errors", [])
+            message = "; ".join(data)
+            raise APIStatusError(message, response=response, body=data)
+
+    def _update_last_request_time(self) -> None:
+        self._last_request_time = time.time()
+
+    def _get_sleep_duration(self) -> float:
+        elapsed = time.time() - self._last_request_time
+        if elapsed < self._delay_between_requests:
+            sleep_time = self._delay_between_requests - elapsed
+            return sleep_time
+        return 0.0
 
     @property
     def user_agent(self) -> str:
@@ -104,8 +147,22 @@ class BaseClient(Generic[_NiquestsSessionT]):
 class SyncAPIClient(BaseClient[niquests.Session]):
     _client: niquests.Session    
 
-    def __init__(self, *, version: str, base_url: str) -> None:
-        super().__init__(version=version, base_url=base_url)
+    def __init__(
+        self,
+        *,
+        version: str,
+        base_url: str,
+        keep_rate_limit: bool,
+        request_limit: int,
+        delay_between_requests: int,
+    ) -> None:
+        super().__init__(
+            version=version,
+            base_url=base_url,
+            keep_rate_limit=keep_rate_limit,
+            request_limit=request_limit,
+            delay_between_requests=delay_between_requests,
+        )
         
         self._client = niquests.Session(base_url=base_url)
 
@@ -124,10 +181,24 @@ class SyncAPIClient(BaseClient[niquests.Session]):
     ) -> None:
         self.close()
 
+    def _enfore_rate_limit(self) -> None:
+        sleep_time = self._get_sleep_duration()
+        if sleep_time > 0:
+            log.debug(f"Rate limit. Sleep time: {sleep_time} sec")
+            time.sleep(sleep_time)
+
     def request(self, route: Route) -> JsonType:
+        if self._keep_rate_limit:
+            self._enfore_rate_limit()
+
         prepped = self._build_request(route)
         response = self._client.send(prepped)
+        log.debug(f"Response: {response.status_code} ({response.reason})")
+        log.debug(f"Last request time: {self._last_request_time}")
+
         self._check_response(response)
+        self._update_last_request_time()
+
         return response.json()
 
     def get(
